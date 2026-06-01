@@ -32,7 +32,7 @@
 ;; There are two ways to load a theme. Both assume the theme is installed and
 ;; available. You can either set `doom-theme' or manually load a theme with the
 ;; `load-theme' function. This is the default:
-(setq doom-theme 'doom-one)
+(setq doom-theme 'doom-molokai)
 
 ;; This determines the style of line numbers in effect. If set to `nil', line
 ;; numbers are disabled. For relative line numbers, set this to `relative'.
@@ -74,31 +74,58 @@
 ;; You can also try 'gd' (or 'C-c c d') to jump to their definition and see how
 ;; they are implemented.
 
+(map!
+ "C-+" #'text-scale-increase
+ "C--" #'text-scale-increase
+
+ "C-c W h" #'windmove-left
+ "C-c W j" #'windmove-down
+ "C-c W k" #'windmove-up
+ "C-c W l" #'windmove-right) ; Stupid 'doom/load-session' takes 'C-c w l' already so we have to use 'C-c W' insead
+
+
+(after! centaur-tabs
+  (map! :map centaur-tabs-mode-map
+        "C-<tab>" #'centaur-tabs-forward
+        "C-<iso-lefttab>" #'centaur-tabs-backward
+        "C-S-<tab>" #'centaur-tabs-backward))
+
+;; Better off being explicit
+(defun qak/set-indent () (doom/set-indent-width 4))
+(add-hook! '(js-ts-mode-hook typescript-ts-mode c-ts-mode-hook c++-ts-mode-hook) #'qak/set-indent)
+
 (after! vertico
-  (map!
-   :map vertico-map
-   "M-j" #'vertico-next
-   "M-k" #'vertico-previous))
+  (map! :map vertico-map
+        "M-j" #'vertico-next
+        "M-k" #'vertico-previous))
 
 (after! corfu
-  (map!
-   :map corfu-map
-   "M-j"   #'corfu-next
-   "M-k"   #'corfu-previous
-   "<tab>" #'corfu-complete))
+  (map! :map corfu-map
+        "M-j"   #'corfu-next
+        "M-k"   #'corfu-previous
+        "<tab>" #'corfu-complete))
 
-(add-hook 'prog-mode-hook (lambda () (doom/set-indent-width 4)))
+(after! c-ts-mode
+  ;; Credit to: https://www.reddit.com/r/emacs/comments/1bgdw0y/comment/kv6q2vl
+  (defun qak/c-ts-indent-style()
+    `(;; do not indent preprocessor statements
+      ((node-is "preproc") column-0 0)
+      ;; do not indent namespace children
+      ((n-p-gp nil nil "namespace_definition") grand-parent 0)
+      ;; append to linux style
+      ,@(alist-get 'linux (c-ts-mode--indent-styles 'cpp))))
+  (setopt c-ts-mode-indent-style #'qak/c-ts-indent-style))
 
-(defun qak/c-or-c++-indent-setup ()
-  (setq-default c-ts-mode-indent-style #'linux)) ; A rough approximation of the LLVM style, `clang-format' can deal with it anyways
-;; (setq c-ts-mode-indent-offset 4)
-;; (setq c-ts-common-indent-offset 4))
-
-(add-hook 'c-ts-mode-hook   #'qak/c-or-c++-indent-setup)
-(add-hook 'c++-ts-mode-hook #'qak/c-or-c++-indent-setup)
+(add-to-list 'auto-mode-alist '("\\.astro\\'" . web-mode))
 
 (after! lsp-ui
-  (setq lsp-ui-doc-show-with-mouse t))
+  (setopt lsp-keymap-prefix "C-c l")
+  (setopt lsp-ui-doc-show-with-mouse t)
+  (setopt lsp-ui-doc-delay 0.075))
+
+(after! lsp-mode
+  (setopt lsp-nix-nil-formatter ["alejandra"])
+  (setopt lsp-inlay-hint-enable t))
 
 (setq-hook! 'tuareg-mode-hook
   tuareg-use-opam nil)
