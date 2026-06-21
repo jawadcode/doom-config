@@ -74,14 +74,23 @@
 ;; You can also try 'gd' (or 'C-c c d') to jump to their definition and see how
 ;; they are implemented.
 
-(map!
- "C-+" #'text-scale-increase
- "C--" #'text-scale-increase
+(defun qak/shrink-window ()
+  "Shrink window to 80 characters"
+  (interactive)
+  (window-resize nil (- 86 (window-width)) t))
 
- "C-c W h" #'windmove-left
- "C-c W j" #'windmove-down
- "C-c W k" #'windmove-up
- "C-c W l" #'windmove-right) ; Stupid 'doom/load-session' takes 'C-c w l' already so we have to use 'C-c W' insead
+(defvar-keymap qak/window
+  :doc "Window Manipulation"
+  "h" #'windmove-left
+  "j" #'windmove-down
+  "k" #'windmove-up
+  "l" #'windmove-right ; Stupid 'doom/load-session' takes 'C-c w l' already so we have to use 'C-c W' insead
+  "s" #'qak/shrink-window)
+
+(map!
+ "C-+"   #'text-scale-increase
+ "C--"   #'text-scale-increase
+ "C-c W" qak/window)
 
 (after! meow
   (setq meow-cheatsheet-layout meow-cheatsheet-layout-qwerty)
@@ -209,7 +218,8 @@
         "<tab>" #'corfu-complete))
 
 (after! ispell
-  (setopt ispell-dictionary "en_GB"))
+  (setopt ispell-program-name "hunspell"
+          ispell-dictionary "en_GB"))
 
 (add-hook 'text-mode-hook #'mixed-pitch-mode)
 (add-hook 'markdown-mode-hook #'mixed-pitch-mode)
@@ -230,13 +240,17 @@
 (use-package web-mode :mode "\\.astro\\'")
 
 (after! lsp-ui
-  (setopt lsp-keymap-prefix "C-c l")
-  (setopt lsp-ui-doc-show-with-mouse t)
-  (setopt lsp-ui-doc-delay 0.075))
+  (setopt lsp-keymap-prefix "C-c l"
+          lsp-ui-doc-show-with-cursor t
+          lsp-ui-doc-show-with-mouse t
+          lsp-ui-doc-delay 0.075
+          lsp-signature-auto-activate nil)
+  (map! :map lsp-mode-map
+        "M-K" #'lsp-ui-doc-hide))
 
 (after! lsp-mode
-  (setopt lsp-nix-nil-formatter ["alejandra"])
-  (setopt lsp-inlay-hint-enable t))
+  (setopt lsp-nix-nil-formatter ["alejandra"]
+          lsp-inlay-hint-enable t)
 
-(setq-hook! 'tuareg-mode-hook
-  tuareg-use-opam nil)
+  (setq-hook! 'tuareg-mode-hook
+    tuareg-use-opam nil))
